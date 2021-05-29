@@ -23,7 +23,6 @@ sense.set_rotation(270)
 
 # RGB pixel values for snake, food and clear(0 pixels)
 green = (0, 255, 0)
-blue = (0, 0, 255)
 red = (255, 0, 0)
 clear = (0, 0, 0)
 
@@ -33,14 +32,49 @@ class Snake:
     self.__directon = direction
     self.__length = length
   
-  def snakePosition(self):
-    
+  def snakePosition(self):    
     for pos in self.__snakeBody:
       pixels[pos[1] * 8 + pos[0]] = green
       #sense.set_pixels(pixels)
+      
+  def moveSnake(self):
+    #pixels = [clear] * 64  
+    for event in sense.stick.get_events():
+      if event.action == "pressed":
+        if event.direction == "up":
+          self.setSnakeDirection(0)
+          
+        elif event.direction == "right":
+          self.setSnakeDirection(1)
+        
+        elif event.direction == "down":
+          self.setSnakeDirection(2) 
+        
+        elif event.direction == "left":
+          self.setSnakeDirection(3)
+          
+    # To move, add new coordinates to the start of snakeBody array and remove the last element 
+    self.__snakeBody.insert(0, [self.__snakeBody[0][0] + self.__direction[0], self.__snakeBody[0][1] + self.__direction[1]])
+    
     
   def setSnakeDirection(self, d): # 0=up, 1=right, 2=down, 3=left
+    if d == 0:
+      self.__direction = [0, -1]
+      
+    elif d == 1:
+      self.__direction = [1, 0]
+  
+    elif d == 2:
+      self.__direction = [0, 1]
+      
+    elif d == 3:
+      self.__direction = [-1, 0]
+    
+  
+  
+  def checkSnakePosition(self, food): 
     pass
+  
   
   def collision(self):
     pass
@@ -64,14 +98,24 @@ length = 1
 food = [random.randint(0, 7), random.randint(0, 7)]
 
 while True:
+  
+  # clear all the LEDs to nothing (no light)
   pixels = [clear] * 64
+  
   snk = Snake(snakeBody, direction, length)
-  #pixels = [clear] * 64
+  
+  # Display snake position
   snk.snakePosition()
+  
+  # Display food position
   pixels[food[1] * 8 + food[0]] = red
+  
+  # Moving the snake
+  snk.moveSnake()
+  
   sense.set_pixels(pixels)
 
-  time.sleep(0.10)
+  time.sleep(1)
 
 
   
