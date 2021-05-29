@@ -4,10 +4,10 @@ import time
 
 """
 
-  Simple Snake Game-
+  Simple Snake Game
   
   Play snake game with your Raspberry Pi.  Use key board arrow keys to move the snake in the 
-  desired direction. The Pi picks randomly.  
+  desired direction and eat the food to gain points.  
   
   Score will be displayed when the game ends!
   
@@ -18,6 +18,10 @@ import time
 sense = SenseHat()
 sense.low_light = True
 
+# Correcting the orientation of the screen to match the labels on the interface
+sense.set_rotation(270)
+
+# RGB pixel values for snake, food and clear(0 pixels)
 green = (0, 255, 0)
 blue = (0, 0, 255)
 red = (255, 0, 0)
@@ -42,9 +46,9 @@ class Snake:
     pass
   
       
-####
+######
 # Main
-####
+######
 
 # This array shows coordinates of vectors for each part the snake's body
 # Initial position of snake body, center of the screen
@@ -56,18 +60,13 @@ direction = [1, 0]
 # Length of snake's body
 length = 1 
 
-
-##################################################################
-# Main Function
-##################################################################
-
 # Randomizing the location of food in the 8x8 RGB LED grid
 food = [random.randint(0, 7), random.randint(0, 7)]
 
 while True:
   pixels = [clear] * 64
   snk = Snake(snakeBody, direction, length)
-  pixels = [clear] * 64
+  #pixels = [clear] * 64
   snk.snakePosition()
   pixels[food[1] * 8 + food[0]] = red
   sense.set_pixels(pixels)
