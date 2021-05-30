@@ -8,13 +8,19 @@ import time
   
   Play snake game with your Raspberry Pi.  The snake dies immediately if the temperature is less than -10 deg.C or
   more than 60 deg.C. Use key board arrow keys to move the snake in the  desired direction and eat the food to gain 
-  points. If the snake hits the boundaries it dies.
+  points.  
   
   Score will be displayed when the game ends!
   
   Note: Requires sense_hat version 2.2.0 or later
   
 """
+
+#sense = SenseHat()
+#sense.low_light = True
+
+# Correcting the orientation of the screen to match the labels on the Astro Pi GUI buttons
+#sense.set_rotation(90)
 
 # RGB pixel values for snake, food and clear(0 pixels)
 green = (0, 255, 0)
@@ -26,8 +32,13 @@ class Snake:
   def __init__(self, body):
     self.sense = SenseHat()
     self.snakeBody = body
+    #self.__score = 0
     
   def checkTemp(self):
+    '''
+    Checks if the temperature is either below -10 or above 60 degree Celcius. 
+    Snake will die in these ranges.
+    '''
     
     temp = self.sense.get_temperature()
     
@@ -42,16 +53,25 @@ class Snake:
     
   
   def body(self):
+    '''
+    Places the body of snake into the grid
+    '''
     
     for pos in self.snakeBody:
       pixels[pos[1] * 8 + pos[0]] = green
     
   
   def snakeFood(self):
+    '''
+    Places the snake food into the LED grid display.
+    '''
     pixels[food[1] * 8 + food[0]] = red
     
     
-  def setDirection(self, d): # 0=up, 1=right, 2=down, 3=left
+  def setDirection(self, d): 
+    '''
+    Sets up the direction of snake movement such as 0 for up, 1 for right, 2 for down, 3 for left
+    '''
   
     global direction
   
@@ -69,6 +89,12 @@ class Snake:
       
       
   def moveSnake(self):
+    '''
+    This function does the followings: 
+    - Move the snake using joystick. 
+    - Randomly place the next food after its eaten. 
+    - Calculate score at the end of the game.
+    '''
     
     global length, food, score
     
@@ -171,9 +197,3 @@ while True:
   snk.sense.set_pixels(pixels)
 
   time.sleep(0.50)
-
-
-  
-
-
-
