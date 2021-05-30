@@ -4,10 +4,11 @@ import time
 
 """
 
-  Simple Snake Game
+  Simple Snake Game-
   
-  Play snake game with your Raspberry Pi.  Use key board arrow keys to move the snake in the 
-  desired direction and eat the food to gain points.  
+  Play snake game with your Raspberry Pi.  The snake dies immediately if the temperature is less than -10 deg.C or
+  more than 60 deg.C. Use key board arrow keys to move the snake in the  desired direction and eat the food to gain 
+  points.  
   
   Score will be displayed when the game ends!
   
@@ -15,109 +16,158 @@ import time
   
 """
 
-sense = SenseHat()
-sense.low_light = True
+#sense = SenseHat()
+#sense.low_light = True
 
-# Correcting the orientation of the screen to match the labels on the interface
-sense.set_rotation(270)
+# Correcting the orientation of the screen to match the labels on the Astro Pi GUI buttons
+#sense.set_rotation(90)
 
 # RGB pixel values for snake, food and clear(0 pixels)
 green = (0, 255, 0)
 red = (255, 0, 0)
 clear = (0, 0, 0)
 
+
 class Snake:
-  def __init__(self, snakeBody, direction, length):
-    self.__snakeBody = snakeBody
-    self.__directon = direction
-    self.__length = length
-  
-  def snakePosition(self):    
-    for pos in self.__snakeBody:
-      pixels[pos[1] * 8 + pos[0]] = green
-      #sense.set_pixels(pixels)
+  def __init__(self, body):
+    self.sense = SenseHat()
+    self.snakeBody = body
+    self.__score = 0
+    
+  def checkTemp(self):
+    
+    temp = self.sense.get_temperature()
+    
+    if temp <= -10:
       
-  def moveSnake(self):
-    #pixels = [clear] * 64  
-    for event in sense.stick.get_events():
-      if event.action == "pressed":
-        if event.direction == "up":
-          self.setSnakeDirection(0)
-          
-        elif event.direction == "right":
-          self.setSnakeDirection(1)
-        
-        elif event.direction == "down":
-          self.setSnakeDirection(2) 
-        
-        elif event.direction == "left":
-          self.setSnakeDirection(3)
-          
-    # To move, add new coordinates to the start of snakeBody array and remove the last element 
-    self.__snakeBody.insert(0, [self.__snakeBody[0][0] + self.__direction[0], self.__snakeBody[0][1] + self.__direction[1]])
+      self.sense.show_message("Snake died because of extremely LOW temperature", text_colour=[255, 0, 0])
+      exit()
+    
+    if temp >= 60:
+      self.sense.show_message("Snake died because of extremely HIGH temperature", text_colour=[255, 0, 0])
+      exit()
+    
+  
+  def body(self):
+    
+    for pos in self.snakeBody:
+      pixels[pos[1] * 8 + pos[0]] = green
+    
+  
+  def snakeFood(self):
+    pixels[food[1] * 8 + food[0]] = red
     
     
-  def setSnakeDirection(self, d): # 0=up, 1=right, 2=down, 3=left
+  def setDirection(self, d): # 0=up, 1=right, 2=down, 3=left
+  
+    global direction
+  
     if d == 0:
-      self.__direction = [0, -1]
+      direction = [0, -1]
       
     elif d == 1:
-      self.__direction = [1, 0]
+      direction = [1, 0]
   
     elif d == 2:
-      self.__direction = [0, 1]
+      direction = [0, 1]
       
     elif d == 3:
-      self.__direction = [-1, 0]
-    
-  
-  
-  def checkSnakePosition(self, food): 
-    pass
-  
-  
-  def collision(self):
-    pass
-  
+      direction = [-1, 0]
       
-######
+      
+  def moveSnake(self):
+    
+    global length, food
+    
+    for event in self.sense.stick.get_events():
+      
+      if event.action == "pressed":
+        
+        if event.direction == "up":
+          self.setDirection(0)
+          
+        elif event.direction == "right":
+          self.setDirection(1)
+        
+        elif event.direction == "down":
+          self.setDirection(2) 
+        
+        elif event.direction == "left":
+          self.setDirection(3)
+          
+    self.snakeBody.insert(0, [self.snakeBody[0][0] + direction[0], self.snakeBody[0][1] + direction[1]])
+    
+    # if snakes goes off the screen it will come from the other side
+    if self.snakeBody[0][0] < 0:
+      self.snakeBody[0][0] = 7
+      
+    if self.snakeBody[0][1] < 0:
+      self.snakeBody[0][1] = 7
+      
+    if self.snakeBody[0][0] > 7:
+      self.snakeBody[0][0] = 0
+      
+    if self.snakeBody[0][1] > 7:
+      self.snakeBody[0][1] = 0
+
+    if self.snakeBody[0] == food: # if snake eats the food
+      food = [] 
+      while food == []:  # while food position is empty
+        food = [random.randint(0, 7), random.randint(0, 7)]  # set new random positon for food
+        if food in self.snakeBody:  # if the random food position is accidently overlaps the position of snake body
+          food = []   # loop again and try to look for new position
+        length += 1   # after a new food location is set successfully, increase snake length by 1
+        
+    elif self.snakeBody[0] in self.snakeBody[1:]:  # reset itself if snake head collides with rest of its body
+      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
+      self.sense.show_message(str(self.__score), text_colour=[255, 255, 0])
+      exit()
+        
+    else: #if snake does eat the food
+      self.__score += 5
+      while len(self.snakeBody) > length: # if length of snake is greater than the length it is supposed to be
+        self.snakeBody.pop()   # removes last element of array, to make an illusion of moving snake
+      
+      
+#########
 # Main
-######
+#########
 
 # This array shows coordinates of vectors for each part the snake's body
-# Initial position of snake body, center of the screen
-snakeBody = [[3, 3]] 
+# Initial position of snake body
+#
+snakeBody = [[2, 2]]  
 
-# Array of the direction of moving, x, y
-direction = [1, 0]
+# Normal direction of snake movement, left to right of the screen
+direction = [1, 0] 
 
-# Length of snake's body
+# Length of the snake
 length = 1 
 
-# Randomizing the location of food in the 8x8 RGB LED grid
+# Generate an initial random position for food
 food = [random.randint(0, 7), random.randint(0, 7)]
+
 
 while True:
   
-  # clear all the LEDs to nothing (no light)
+  # clear the screen
   pixels = [clear] * 64
   
-  snk = Snake(snakeBody, direction, length)
+  snk = Snake(snakeBody)
   
-  # Display snake position
-  snk.snakePosition()
+  snk.checkTemp()
+  
+  # Display snake's initial position
+  snk.body()
   
   # Display food position
-  pixels[food[1] * 8 + food[0]] = red
+  snk.snakeFood()
   
-  # Moving the snake
   snk.moveSnake()
   
-  sense.set_pixels(pixels)
+  #snk.checkSnakePosition(food)
+  
+  # setting the sense_Hat pixels to the pixels array
+  snk.sense.set_pixels(pixels)
 
   time.sleep(1)
-
-
-  
-
-
