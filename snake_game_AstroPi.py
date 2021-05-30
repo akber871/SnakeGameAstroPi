@@ -8,7 +8,7 @@ import time
   
   Play snake game with your Raspberry Pi.  The snake dies immediately if the temperature is less than -10 deg.C or
   more than 60 deg.C. Use key board arrow keys to move the snake in the  desired direction and eat the food to gain 
-  points.  
+  points. If the snake hits the boundaries it dies.
   
   Score will be displayed when the game ends!
   
@@ -32,7 +32,6 @@ class Snake:
   def __init__(self, body):
     self.sense = SenseHat()
     self.snakeBody = body
-    self.__score = 0
     
   def checkTemp(self):
     
@@ -77,7 +76,7 @@ class Snake:
       
   def moveSnake(self):
     
-    global length, food
+    global length, food, score
     
     for event in self.sense.stick.get_events():
       
@@ -97,36 +96,45 @@ class Snake:
           
     self.snakeBody.insert(0, [self.snakeBody[0][0] + direction[0], self.snakeBody[0][1] + direction[1]])
     
-    # if snakes goes off the screen it will come from the other side
+    # if snakes goes off the screen it will die
     if self.snakeBody[0][0] < 0:
-      self.snakeBody[0][0] = 7
+      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
+      self.sense.show_message(str(score), text_colour=[255, 255, 0])
+      exit()
       
     if self.snakeBody[0][1] < 0:
-      self.snakeBody[0][1] = 7
+      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
+      self.sense.show_message(str(score), text_colour=[255, 255, 0])
+      exit()
       
     if self.snakeBody[0][0] > 7:
-      self.snakeBody[0][0] = 0
+      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
+      self.sense.show_message(str(score), text_colour=[255, 255, 0])
+      exit()
       
     if self.snakeBody[0][1] > 7:
-      self.snakeBody[0][1] = 0
-
-    if self.snakeBody[0] == food: # if snake eats the food
-      food = [] 
-      while food == []:  # while food position is empty
-        food = [random.randint(0, 7), random.randint(0, 7)]  # set new random positon for food
-        if food in self.snakeBody:  # if the random food position is accidently overlaps the position of snake body
-          food = []   # loop again and try to look for new position
-        length += 1   # after a new food location is set successfully, increase snake length by 1
-        
-    elif self.snakeBody[0] in self.snakeBody[1:]:  # reset itself if snake head collides with rest of its body
       self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
-      self.sense.show_message(str(self.__score), text_colour=[255, 255, 0])
+      self.sense.show_message(str(score), text_colour=[255, 255, 0])
+      exit()
+
+    # if snake eats the food
+    if self.snakeBody[0] == food: 
+      food = [] 
+      while food == []:  
+        food = [random.randint(0, 7), random.randint(0, 7)]  
+        if food in self.snakeBody:  
+          food = []  
+        length += 1
+        score += 10
+        
+    elif self.snakeBody[0] in self.snakeBody[1:]:  
+      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
+      self.sense.show_message(str(score), text_colour=[255, 255, 0])
       exit()
         
-    else: #if snake does eat the food
-      self.__score += 5
-      while len(self.snakeBody) > length: # if length of snake is greater than the length it is supposed to be
-        self.snakeBody.pop()   # removes last element of array, to make an illusion of moving snake
+    else:
+      while len(self.snakeBody) > length: 
+        self.snakeBody.pop()   
       
       
 #########
@@ -143,10 +151,9 @@ direction = [1, 0]
 
 # Length of the snake
 length = 1 
-
+score = 0
 # Generate an initial random position for food
 food = [random.randint(0, 7), random.randint(0, 7)]
-
 
 while True:
   
@@ -163,11 +170,16 @@ while True:
   # Display food position
   snk.snakeFood()
   
+  # Move snake with joystick
   snk.moveSnake()
-  
-  #snk.checkSnakePosition(food)
   
   # setting the sense_Hat pixels to the pixels array
   snk.sense.set_pixels(pixels)
 
-  time.sleep(1)
+  time.sleep(0.50)
+
+
+  
+
+
+
