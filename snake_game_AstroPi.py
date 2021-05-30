@@ -16,11 +16,6 @@ import time
   
 """
 
-#sense = SenseHat()
-#sense.low_light = True
-
-# Correcting the orientation of the screen to match the labels on the Astro Pi GUI buttons
-#sense.set_rotation(90)
 
 # RGB pixel values for snake, food and clear(0 pixels)
 green = (0, 255, 0)
@@ -32,7 +27,7 @@ class Snake:
   def __init__(self, body):
     self.sense = SenseHat()
     self.snakeBody = body
-    #self.__score = 0
+
     
   def checkTemp(self):
     '''
@@ -42,14 +37,8 @@ class Snake:
     
     temp = self.sense.get_temperature()
     
-    if temp <= -10:
-      
-      self.sense.show_message("Snake died because of extremely LOW temperature", text_colour=[255, 0, 0])
-      exit()
-    
-    if temp >= 60:
-      self.sense.show_message("Snake died because of extremely HIGH temperature", text_colour=[255, 0, 0])
-      exit()
+    if temp <= -10 or temp >= 60:
+      self.gameOver()
     
   
   def body(self):
@@ -63,7 +52,7 @@ class Snake:
   
   def snakeFood(self):
     '''
-    Places the snake food into the LED grid display.
+    Places the body of snake into the grid
     '''
     pixels[food[1] * 8 + food[0]] = red
     
@@ -116,26 +105,18 @@ class Snake:
           
     self.snakeBody.insert(0, [self.snakeBody[0][0] + direction[0], self.snakeBody[0][1] + direction[1]])
     
-    # if snakes goes off the screen it will die
+    # Snake dies if it hits the boundaries of the grid display
     if self.snakeBody[0][0] < 0:
-      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
-      self.sense.show_message(str(score), text_colour=[255, 255, 0])
-      exit()
+      self.gameOver()
       
     if self.snakeBody[0][1] < 0:
-      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
-      self.sense.show_message(str(score), text_colour=[255, 255, 0])
-      exit()
+      self.gameOver()
       
     if self.snakeBody[0][0] > 7:
-      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
-      self.sense.show_message(str(score), text_colour=[255, 255, 0])
-      exit()
+      self.gameOver()
       
     if self.snakeBody[0][1] > 7:
-      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
-      self.sense.show_message(str(score), text_colour=[255, 255, 0])
-      exit()
+      self.gameOver()
 
     # if snake eats the food
     if self.snakeBody[0] == food: 
@@ -148,13 +129,17 @@ class Snake:
         score += 10
         
     elif self.snakeBody[0] in self.snakeBody[1:]:  
-      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
-      self.sense.show_message(str(score), text_colour=[255, 255, 0])
-      exit()
-        
+      self.gameOver()
+      
     else:
       while len(self.snakeBody) > length: 
         self.snakeBody.pop()   
+        
+    
+  def gameOver(self):
+      self.sense.show_message("GAME OVER! Your Score:", text_colour=[255, 0, 0])
+      self.sense.show_message(str(score), text_colour=[255, 255, 0])
+      exit()   
       
       
 #########
@@ -171,7 +156,10 @@ direction = [1, 0]
 
 # Length of the snake
 length = 1 
+
+# Score accumulator
 score = 0
+
 # Generate an initial random position for food
 food = [random.randint(0, 7), random.randint(0, 7)]
 
@@ -196,4 +184,4 @@ while True:
   # setting the sense_Hat pixels to the pixels array
   snk.sense.set_pixels(pixels)
 
-  time.sleep(0.50)
+  t = time.sleep(0.50)
