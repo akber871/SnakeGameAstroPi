@@ -16,12 +16,6 @@ import time
   
 """
 
-#sense = SenseHat()
-#sense.low_light = True
-
-# Correcting the orientation of the screen to match the labels on the Astro Pi GUI buttons
-#sense.set_rotation(90)
-
 # RGB pixel values for snake, food and clear(0 pixels)
 green = (0, 255, 0)
 red = (255, 0, 0)
